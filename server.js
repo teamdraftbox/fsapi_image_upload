@@ -1,5 +1,5 @@
 // Define Configuration
-
+process.EventEmitter = require('events').EventEmitter
 var config = {
     // Authentication keys
     keys: [
@@ -22,9 +22,9 @@ var config = {
         cert: false
     },
     // Port designation
-    port: 8080,
+    port: 5050,
     // Base directory
-    base: "/tmp",
+    base: "./file",
     // Default create mode
     cmode: "0755"
 };
@@ -65,7 +65,6 @@ server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
 server.use(restify.CORS());
-
 // Regular Expressions
 var commandRegEx = /^\/([a-zA-Z0-9_\.~-]+)\/([a-zA-Z0-9_\.~-]+)\/(.*)/,  // /{key}/{command}/{path}
     pathRegEx = /^\/([a-zA-Z0-9_\.~-]+)\/(.*)/;  // /{key}/{path}
@@ -178,7 +177,7 @@ var resError = function (code, raw, res) {
 
 var resSuccess = function (data, res) {
 
-    res.send({ "status": "success", "data": data });
+    res.json({ "status": "success", "data": data });
 
 };
 
@@ -318,6 +317,8 @@ server.get(commandRegEx, function (req, res, next) {
  * copy - copies a file or dirextory (to path at param "destination")
  *
  */
+var base64Img = require('base64-img');
+
 server.post(commandRegEx, function (req, res, next) {
 
     // Check request
@@ -348,13 +349,11 @@ server.post(commandRegEx, function (req, res, next) {
             // Ensure base path
             if (checkPath(path)) {
               if (req.params.data) {
-                fs.writeFile(path, req.params.data, function(err) {
-                    if(err) {
-                        resError(107, err, res);
-                    } else {
-                        resSuccess(null, res);
-                    }
-                });
+                console.log(req.params.data)
+                fs.mkdirSync(`./file/${req.params.folderName}`)
+                var filepath = base64Img.imgSync(`${req.params.data}`, `./file/${req.params.folderName}`,"bannerImage1");
+                var filepath = base64Img.imgSync(`${req.params.data2}`, `./file/${req.params.folderName}`, "bannerImage2");
+                resSuccess(null, res);
               } else if (req.files && req.files.filedata) {
                 fs.readFile(req.files.filedata.path, function (err, data) {
                     fs.writeFile(path, data, function (err) {
@@ -440,16 +439,19 @@ server.put(commandRegEx, function (req, res, next) {
             // Make sure it exists
             if (fs.existsSync(path)) {
                 // Make sure it's a file
-                if (!fs.lstatSync(path).isDirectory()) {
+                fs.unlinkSync(path)
+                console.log(path)
+                if (true) {
                     // Write
-                    if (req.params.data) {
-                      fs.writeFile(path, req.params.data, function(err) {
-                          if(err) {
-                              resError(107, err, res);
-                          } else {
-                              resSuccess(null, res);
-                          }
-                      });
+                    if (req.params) {
+                        //console.log(req.params)
+                      if(req.params.data){
+                        var filepath = base64Img.imgSync(`${req.params.data}`, `./file/${req.params.folderName}`,"bannerImage1");
+                      }
+                      if(req.params.data2){
+                        var filepath = base64Img.imgSync(`${req.params.data2}`, `./file/${req.params.folderName}`, "bannerImage2");
+                      }
+                        resSuccess(null, res);
                     } else if (req.files && req.files.filedata) {
                       fs.readFile(req.files.filedata.path, function (err, data) {
                           fs.writeFile(path, data, function (err) {
